@@ -20,17 +20,18 @@ goog.inherits(vadimg.bintrees.RBTree,vadimg.bintrees.TreeBase);
 
 /**
  * returns true if inserted, false if duplicate
- * @param {!goog.math.Range} data
+ * @param {!goog.math.Range} range
  * @return {!boolean}
  */
-vadimg.bintrees.RBTree.prototype.insert = function(data) {
-  goog.asserts.assertInstanceof(data,goog.math.Range);
+vadimg.bintrees.RBTree.prototype.insert = function(range) {
+  goog.asserts.assertInstanceof(range,goog.math.Range);
 
   var ret = false;
 
   if(goog.isNull(this.root_)) {
     // empty tree
-    this.root_ = new vadimg.bintrees.Node(data.start,data.end);
+    this.root_ = new vadimg.bintrees.Node(range.start);
+    this.root_.addRange(range);
     ret = true;
     this.size++;
   }else {
@@ -50,7 +51,7 @@ vadimg.bintrees.RBTree.prototype.insert = function(data) {
     while(true) {
       if(goog.isNull(node)) {
         // insert new node at the bottom
-        node = new vadimg.bintrees.Node(data.start,data.end);
+        node = new vadimg.bintrees.Node(range.start);
         p.set_child(dir, node);
         ret = true;
         this.size++;
@@ -73,7 +74,7 @@ vadimg.bintrees.RBTree.prototype.insert = function(data) {
         }
       }
 
-      var cmp = this.comparator_(node.data, data);
+      var cmp = this.comparator_(node.start, range.start);
 
       // stop if found
       if(cmp === 0) {
@@ -94,6 +95,7 @@ vadimg.bintrees.RBTree.prototype.insert = function(data) {
 
     // update root
     this.root_ = head.right;
+    node.addRange(range);
   }
 
   // make root black
@@ -129,7 +131,7 @@ vadimg.bintrees.RBTree.prototype.remove = function(data) {
         p = node;
         node = node.get_child(dir);
 
-        var cmp = this.comparator_(data, node.data);
+        var cmp = this.comparator_(data, node.start);
 
         dir = cmp > 0;
 

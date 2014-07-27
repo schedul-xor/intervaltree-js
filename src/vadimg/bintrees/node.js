@@ -1,19 +1,32 @@
 goog.provide('vadimg.bintrees.Node');
 
+goog.require('goog.math.Range');
+
 
 
 /**
  * @constructor
- * @param {number=} opt_data
- * @param {!number=} opt_myEnd
+ * @param {number=} opt_start
  */
-vadimg.bintrees.Node = function(opt_data,opt_myEnd) {
-  this.data = opt_data?opt_data:null;
-  this.myEnd = opt_myEnd?opt_myEnd:null;
-  this.intersectedEnd = this.myEnd;
+vadimg.bintrees.Node = function(opt_start) {
+  this.start = opt_start?opt_start:null;
+  this.end2range_ = {};
+  this.intersectedEnd = goog.isNull(this.start)?null:this.start;
   this.left = null;
   this.right = null;
   this.red = true;
+};
+
+
+/**
+ * @param {!goog.math.Range} range
+ */
+vadimg.bintrees.Node.prototype.addRange = function(range){
+  var end = range.end;
+  if(goog.object.containsKey(this.end2range_,end)){
+    return;
+  }
+  this.end2range_[end] = range;
 };
 
 
