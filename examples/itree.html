@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
-    <title>Murmur hash example</title>
+    <title>Interval tree example</title>
     <style>
       *{font-family: sans-serif;}
     </style>
@@ -16,25 +16,22 @@
       <div class="row-fluid">
 
         <div class="span12">
-          <h4 id="title">MurmurHash Example</h4>
-          <p id="shortdesc">Example of Murmur-hash.</p>
+          <h4 id="title">Interval tree Example</h4>
+          <p id="shortdesc">Example of Interval tree.</p>
           <div id="docs">
-            <p>See the <a href="murmurhash.js" target="_blank">murmurhash.js source</a> to see how this is done.</p>
+            <p>See the <a href="itree.js" target="_blank">itree.js source</a> to see how this is done.</p>
           </div>
         </div>
 
-        <table>
-          <tr>
-            <td><div id="input"></div><div id="seed"></div></td>
-            <td><div id="i2o"></div></td>
-            <td><div id="output"></div></td>
-          </tr>
-        </table>
+        Add range<div id="range_input"></div><div id="range_input_button"></div>
+        Current ranges<div id="current_ranges"></div>
+        Search <div id="point_input"></div><div id="point_input_button"></div>
+        Matched <div id="matched"></div>
       </div>
     </div>
 
     <script src="../resources/example-behaviour.js" type="text/javascript"></script>
-    <script src="loader.js?id=murmurhash" type="text/javascript"></script>
+    <script src="loader.js?id=itree" type="text/javascript"></script>
 
   </body>
 </html>

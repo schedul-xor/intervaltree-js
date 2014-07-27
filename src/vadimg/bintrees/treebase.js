@@ -1,17 +1,17 @@
 goog.provide('vadimg.bintrees.TreeBase');
 
+goog.require('goog.asserts');
 goog.require('vadimg.bintrees.Iterator');
 
 
 
 /**
  * @constructor
- * @template T
- * @param {function(!T,!T):!number=} opt_comparator
+ * @param {function(!number,!number):!number=} opt_comparator
  */
 vadimg.bintrees.TreeBase = function(opt_comparator) {
-  this._root = null;
-  this._comparator = opt_comparator?opt_comparator:vadimg.bintrees.TreeBase.DEFAULT_COMPARATOR_;
+  this.root_ = null;
+  this.comparator_ = opt_comparator?opt_comparator:vadimg.bintrees.TreeBase.DEFAULT_COMPARATOR_;
 };
 
 
@@ -19,19 +19,23 @@ vadimg.bintrees.TreeBase = function(opt_comparator) {
  * removes all nodes from the tree
  */
 vadimg.bintrees.TreeBase.prototype.clear = function() {
-    this._root = null;
+    this.root_ = null;
     this.size = 0;
 };
 
 
 /**
  * returns node data if found, null otherwise
+ * @param {!number} data
+ * @return {?number}
  */
 vadimg.bintrees.TreeBase.prototype.find = function(data) {
-    var res = this._root;
+  goog.asserts.assertNumber(data);
 
-    while(res !== null) {
-        var c = this._comparator(data, res.data);
+    var res = this.root_;
+
+    while(!goog.isNull(res)) {
+        var c = this.comparator_(data, res.data);
         if(c === 0) {
             return res.data;
         }
@@ -46,68 +50,75 @@ vadimg.bintrees.TreeBase.prototype.find = function(data) {
 
 /**
  * returns iterator to node if found, null otherwise
+ * @param {!number} data
+ * @return {?vadimg.bintrees.Iterator}
  */
 vadimg.bintrees.TreeBase.prototype.findIter = function(data) {
-    var res = this._root;
-    var iter = this.iterator();
+  goog.asserts.assertNumber(data);
 
-    while(res !== null) {
-        var c = this._comparator(data, res.data);
+    var res = this.root_;
+    var iter = new vadimg.bintrees.Iterator();
+
+    while(!goog.isNull(res)) {
+        var c = this.comparator_(data, res.data);
         if(c === 0) {
             iter._cursor = res;
             return iter;
         }
         else {
-            iter._ancestors.push(res);
+            iter.getAncestors().push(res);
             res = res.get_child(c > 0);
         }
     }
-
     return null;
 };
 
 
 /**
  * Returns an interator to the tree node at or immediately after the item
+ * @param {!number} item
+ * @return {!vadimg.bintrees.Iterator}
  */
 vadimg.bintrees.TreeBase.prototype.lowerBound = function(item) {
-    var cur = this._root;
-    var iter = this.iterator();
-    var cmp = this._comparator;
+    var cur = this.root_;
+    var iter = new vadimg.bintrees.Iterator();
+    var cmp = this.comparator_;
 
-    while(cur !== null) {
+    while(!goog.isNull(cur)) {
         var c = cmp(item, cur.data);
         if(c === 0) {
             iter._cursor = cur;
             return iter;
         }
-        iter._ancestors.push(cur);
+        iter.getAncestors().push(cur);
         cur = cur.get_child(c > 0);
     }
 
-    for(var i=iter._ancestors.length - 1; i >= 0; --i) {
-        cur = iter._ancestors[i];
+    for(var i=iter.getAncestors().length - 1; i >= 0; --i) {
+        cur = iter.getAncestors()[i];
         if(cmp(item, cur.data) < 0) {
             iter._cursor = cur;
-            iter._ancestors.length = i;
+            iter.getAncestors().length = i;
             return iter;
         }
     }
 
-    iter._ancestors.length = 0;
+    iter.getAncestors().length = 0;
     return iter;
 };
 
 
 /**
  * Returns an interator to the tree node immediately after the item
+ * @param {!number} item
+ * @return {!vadimg.bintrees.Iterator}
  */
 vadimg.bintrees.TreeBase.prototype.upperBound = function(item) {
     var iter = this.lowerBound(item);
-    var cmp = this._comparator;
+    var cmp = this.comparator_;
 
     while(cmp(iter.data(), item) === 0) {
-        iter.next();
+        iter.next(this.root_);
     }
 
     return iter;
@@ -116,35 +127,61 @@ vadimg.bintrees.TreeBase.prototype.upperBound = function(item) {
 
 /**
  * returns null if tree is empty
+ * @return {?number}
  */
 vadimg.bintrees.TreeBase.prototype.min = function() {
-    var res = this._root;
-    if(res === null) {
+    var res = this.root_;
+    if(goog.isNull(res)) {
         return null;
     }
-
-    while(res.left !== null) {
+    while(!goog.isNull(res.left)) {
         res = res.left;
     }
-
     return res.data;
 };
 
 
 /**
  * returns null if tree is empty
+ * @return {?number}
  */
 vadimg.bintrees.TreeBase.prototype.max = function() {
-    var res = this._root;
-    if(res === null) {
+    var res = this.root_;
+    if(goog.isNull(res)) {
         return null;
     }
-
-    while(res.right !== null) {
+    while(!goog.isNull(res.right)) {
         res = res.right;
     }
-
     return res.data;
+};
+
+
+/**
+ * calls cb on each node's data, in order
+ * @template S
+ * @param {!function(?number)} f
+ * @param {S=} opt_obj The object to be used as the value of 'this' within f.
+ */
+vadimg.bintrees.TreeBase.prototype.forEach = function(f,opt_obj) {
+    var it=new vadimg.bintrees.Iterator(), data;
+    while(!goog.isNull(data = it.next(this.root_))) {
+        f.call(opt_obj, data);
+    }
+};
+
+
+/**
+ * calls cb on each node's data, in reverse order
+ * @template S
+ * @param {!function(?number)} f
+ * @param {S=} opt_obj The object to be used as the value of 'this' within f.
+ */
+vadimg.bintrees.TreeBase.prototype.forReversedEach = function(f,opt_obj) {
+    var it=new vadimg.bintrees.Iterator(), data;
+    while(!goog.isNull(data = it.prev(this.root_))) {
+        f.call(opt_obj, data);
+    }
 };
 
 
@@ -158,34 +195,4 @@ vadimg.bintrees.TreeBase.DEFAULT_COMPARATOR_ = function(a, b) {
     return 1;
   }
   return 0;
-};
-
-
-/**
- * returns a null iterator. call next() or prev() to point to an element
- */
-vadimg.bintrees.TreeBase.prototype.iterator = function() {
-    return new vadimg.bintrees.Iterator();
-};
-
-
-/**
- * calls cb on each node's data, in order
- */
-vadimg.bintrees.TreeBase.prototype.each = function(cb) {
-    var it=this.iterator(), data;
-    while((data = it.next(this._root)) !== null) {
-        cb(data);
-    }
-};
-
-
-/**
- * calls cb on each node's data, in reverse order
- */
-vadimg.bintrees.TreeBase.prototype.reach = function(cb) {
-    var it=this.iterator(), data;
-    while((data = it.prev(this._root)) !== null) {
-        cb(data);
-    }
 };
