@@ -440,4 +440,63 @@ describe('vadimg.bintrees.BinTree',function(){
     });
 
   });
+  describe('with [1,4), [2,3), [3,4), [3,5), [4,8), [5,7) inserted',function(){
+    var tree = new vadimg.bintrees.BinTree();
+    tree.insert(new goog.math.Range(1,4));
+    tree.insert(new goog.math.Range(2,3));
+    tree.insert(new goog.math.Range(3,4));
+    tree.insert(new goog.math.Range(3,5));
+    tree.insert(new goog.math.Range(4,8));
+    tree.insert(new goog.math.Range(5,7));
+
+    it('should return nothing when searching with 0.9',function(){
+      var found = tree.find(0.9);
+      expect(found).to.be.empty();
+      found = tree.find(0.9);
+      expect(found).to.be.empty();
+    });
+
+    it('should return 1 result when searching with 1',function(){
+      var found = tree.find(1);
+      expect(found.length).to.be(1);
+      found = tree.find(1);
+      expect(found.length).to.be(1);
+    });
+
+    it('should return 1 result when searching with 1.1',function(){
+      var found = tree.find(1.1);
+      expect(found.length).to.be(1);
+      found = tree.find(1.1);
+      expect(found.length).to.be(1);
+    });
+
+    it('should return 2 results when searching with 2',function(){
+      var found = tree.find(2);
+      expect(found.length).to.be(2);
+      found = tree.find(2);
+      expect(found.length).to.be(2);
+    });
+
+    it('should return 3 results when searching with 3',function(){
+      var found = tree.find(3);
+      expect(found.length).to.be(3);
+      found = tree.find(3);
+      expect(found.length).to.be(3);
+    });
+
+    it('should return 2 results when searching with 4',function(){
+      var found = tree.find(4);
+      expect(found.length).to.be(2);
+      found = tree.find(4);
+      expect(found.length).to.be(2);
+    });
+
+    it('should return 2 results when searching with 5',function(){
+      var found = tree.find(5);
+      expect(found.length).to.be(2);
+      found = tree.find(5);
+      expect(found.length).to.be(2);
+    });
+
+  });
 });
