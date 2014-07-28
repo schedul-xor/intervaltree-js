@@ -33,7 +33,7 @@ vadimg.bintrees.TreeBase.prototype.find = function(data) {
   goog.asserts.assertNumber(data);
 
   var res = this.root_;
-  var minStartInRes = this.min(this.root_);
+  var minStartInRes = this.min();
   if(this.comparator_(data,minStartInRes) === -1){
     return [];
   }
