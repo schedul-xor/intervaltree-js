@@ -180,7 +180,7 @@ vadimg.bintrees.RBTree.prototype.remove = function(data) {
 
   // replace and remove if found
   if(!goog.isNull(found)){
-    found.data = node.data;
+    found.start = node.start;
     p.set_child(p.right === node, node.get_child(goog.isNull(node.left)));
     this.size--;
   }

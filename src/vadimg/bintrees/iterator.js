@@ -1,5 +1,6 @@
 goog.provide('vadimg.bintrees.Iterator');
 
+goog.require('goog.asserts');
 goog.require('vadimg.bintrees.Node');
 
 
@@ -10,6 +11,14 @@ goog.require('vadimg.bintrees.Node');
 vadimg.bintrees.Iterator = function() {
   this.ancestors_ = [];
   this.cursor_ = null;
+};
+
+
+/**
+ * @param {!vadimg.bintrees.Node} node
+ */
+vadimg.bintrees.Iterator.prototype.setNodeForCursor = function(node){
+  this.cursor_ = node;
 };
 
 
@@ -25,14 +34,14 @@ vadimg.bintrees.Iterator.prototype.getAncestors = function(){
  * @return {?number}
  */
 vadimg.bintrees.Iterator.prototype.data = function() {
-  return !goog.isNull(this.cursor_) ? this.cursor_.data : null;
+  return !goog.isNull(this.cursor_) ? this.cursor_.start : null;
 };
 
 
 /**
  * if null-iterator, returns first node. otherwise, returns next node
  * @param {?vadimg.bintrees.Node} treeRootNode
- * @return {?number}
+ * @return {?vadimg.bintrees.Node}
  */
 vadimg.bintrees.Iterator.prototype.next = function(treeRootNode) {
   if(goog.isNull(this.cursor_)) {
@@ -40,8 +49,7 @@ vadimg.bintrees.Iterator.prototype.next = function(treeRootNode) {
     if(!goog.isNull(root)){
       this.minNode_(root);
     }
-  }
-  else {
+  }else {
     if(goog.isNull(this.cursor_.right)) {
       // no greater node in subtree, go up to parent
       // if coming from a right child, continue up the stack
@@ -50,27 +58,25 @@ vadimg.bintrees.Iterator.prototype.next = function(treeRootNode) {
         save = this.cursor_;
         if(this.ancestors_.length) {
           this.cursor_ = this.ancestors_.pop();
-        }
-        else {
+        } else {
           this.cursor_ = null;
           break;
         }
       } while(this.cursor_.right === save);
-    }
-    else {
+    } else {
       // get the next node from the subtree
       this.ancestors_.push(this.cursor_);
       this.minNode_(this.cursor_.right);
     }
   }
-  return !goog.isNull(this.cursor_) ? this.cursor_.data : null;
+  return this.cursor_;
 };
 
 
 /**
  *  if null-iterator, returns last node. otherwise, returns previous node
  * @param {?vadimg.bintrees.Node} treeRootNode
- * @return {?number}
+ * @return {?vadimg.bintrees.Node}
  */
 vadimg.bintrees.Iterator.prototype.prev = function(treeRootNode) {
   if(goog.isNull(this.cursor_)) {
@@ -78,27 +84,24 @@ vadimg.bintrees.Iterator.prototype.prev = function(treeRootNode) {
     if(!goog.isNull(root)){
       this.maxNode_(root);
     }
-  }
-  else {
+  }else {
     if(goog.isNull(this.cursor_.left)) {
       var save;
       do {
         save = this.cursor_;
         if(this.ancestors_.length) {
           this.cursor_ = this.ancestors_.pop();
-        }
-        else {
+        } else {
           this.cursor_ = null;
           break;
         }
       } while(this.cursor_.left === save);
-    }
-    else {
+    } else {
       this.ancestors_.push(this.cursor_);
       this.maxNode_(this.cursor_.left);
     }
   }
-  return !goog.isNull(this.cursor_) ? this.cursor_.data : null;
+  return this.cursor_;
 };
 
 
@@ -107,6 +110,8 @@ vadimg.bintrees.Iterator.prototype.prev = function(treeRootNode) {
  * @param {!vadimg.bintrees.Node} start
  */
 vadimg.bintrees.Iterator.prototype.minNode_ = function(start) {
+  goog.asserts.assertInstanceof(start,vadimg.bintrees.Node);
+
   while(!goog.isNull(start.left)){
     this.ancestors_.push(start);
     start = start.left;
@@ -120,6 +125,8 @@ vadimg.bintrees.Iterator.prototype.minNode_ = function(start) {
  * @param {!vadimg.bintrees.Node} start
  */
 vadimg.bintrees.Iterator.prototype.maxNode_ = function(start) {
+  goog.asserts.assertInstanceof(start,vadimg.bintrees.Node);
+
   while(!goog.isNull(start.right)) {
     this.ancestors_.push(start);
     start = start.right;
