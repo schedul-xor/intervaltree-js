@@ -7,11 +7,14 @@ goog.require('vadimg.bintrees.RBTree');
 
 describe('RBTree',function(){
   var tree = new vadimg.bintrees.RBTree();
-  tree.insert(new goog.math.Range(2,4));
-  tree.insert(new goog.math.Range(5,10));
-  tree.insert(new goog.math.Range(1,3));
-  tree.insert(new goog.math.Range(2,5));
-  tree.insert(new goog.math.Range(8,9));
+  tree.insert(new goog.math.Range(1,4));
+  tree.insert(new goog.math.Range(2,10));
+  tree.insert(new goog.math.Range(3,4));
+  tree.insert(new goog.math.Range(3,5));
+  tree.insert(new goog.math.Range(4,9));
+  tree.insert(new goog.math.Range(5,9));
+  tree.insert(new goog.math.Range(6,7));
+  tree.insert(new goog.math.Range(7,9));
 
   tree.forEach(function(node){
   },this);

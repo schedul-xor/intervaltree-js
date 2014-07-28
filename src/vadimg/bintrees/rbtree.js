@@ -67,10 +67,10 @@ vadimg.bintrees.RBTree.prototype.insert = function(range) {
         var dir2 = ggp.right === gp;
 
         if(node === p.get_child(last)) {
-          ggp.set_child(dir2, vadimg.bintrees.RBTree.single_rotate(gp, !last));
+          ggp.set_child(dir2, vadimg.bintrees.RBTree.singleRotate_(gp, !last));
         }
         else {
-          ggp.set_child(dir2, vadimg.bintrees.RBTree.double_rotate(gp, !last));
+          ggp.set_child(dir2, vadimg.bintrees.RBTree.doubleRotate_(gp, !last));
         }
       }
 
@@ -111,87 +111,87 @@ vadimg.bintrees.RBTree.prototype.insert = function(range) {
  * @return {!boolean}
  */
 vadimg.bintrees.RBTree.prototype.remove = function(data) {
-    if(goog.isNull(this.root_)) {
-        return false;
+  if(goog.isNull(this.root_)) {
+    return false;
+  }
+
+  var head = new vadimg.bintrees.Node(); // fake tree root
+  var node = head;
+  node.right = this.root_;
+  var p = null; // parent
+  var gp = null; // grand parent
+  var found = null; // found item
+  var dir = true;
+
+  while(!goog.isNull(node.get_child(dir))) {
+    var last = dir;
+
+    // update helpers
+    gp = p;
+    p = node;
+    node = node.get_child(dir);
+
+    var cmp = this.comparator_(data, node.start);
+
+    dir = cmp > 0;
+
+    // save found node
+    if(cmp === 0) {
+      found = node;
     }
 
-    var head = new vadimg.bintrees.Node(); // fake tree root
-    var node = head;
-    node.right = this.root_;
-    var p = null; // parent
-    var gp = null; // grand parent
-    var found = null; // found item
-    var dir = true;
+    // push the red node down
+    if(!vadimg.bintrees.RBTree.is_red(node) && !vadimg.bintrees.RBTree.is_red(node.get_child(dir))) {
+      if(vadimg.bintrees.RBTree.is_red(node.get_child(!dir))) {
+        var sr = vadimg.bintrees.RBTree.singleRotate_(node, dir);
+        p.set_child(last, sr);
+        p = sr;
+      }
+      else if(!vadimg.bintrees.RBTree.is_red(node.get_child(!dir))) {
+        var sibling = p.get_child(!last);
+        if(!goog.isNull(sibling)){
+          if(!vadimg.bintrees.RBTree.is_red(sibling.get_child(!last)) && !vadimg.bintrees.RBTree.is_red(sibling.get_child(last))) {
+            // color flip
+            p.red = false;
+            sibling.red = true;
+            node.red = true;
+          }
+          else {
+            var dir2 = gp.right === p;
 
-    while(!goog.isNull(node.get_child(dir))) {
-        var last = dir;
-
-        // update helpers
-        gp = p;
-        p = node;
-        node = node.get_child(dir);
-
-        var cmp = this.comparator_(data, node.start);
-
-        dir = cmp > 0;
-
-        // save found node
-        if(cmp === 0) {
-            found = node;
-        }
-
-        // push the red node down
-        if(!vadimg.bintrees.RBTree.is_red(node) && !vadimg.bintrees.RBTree.is_red(node.get_child(dir))) {
-            if(vadimg.bintrees.RBTree.is_red(node.get_child(!dir))) {
-                var sr = vadimg.bintrees.RBTree.single_rotate(node, dir);
-                p.set_child(last, sr);
-                p = sr;
+            if(vadimg.bintrees.RBTree.is_red(sibling.get_child(last))) {
+              gp.set_child(dir2, vadimg.bintrees.RBTree.doubleRotate_(p, last));
             }
-            else if(!vadimg.bintrees.RBTree.is_red(node.get_child(!dir))) {
-                var sibling = p.get_child(!last);
-                if(!goog.isNull(sibling)){
-                    if(!vadimg.bintrees.RBTree.is_red(sibling.get_child(!last)) && !vadimg.bintrees.RBTree.is_red(sibling.get_child(last))) {
-                        // color flip
-                        p.red = false;
-                        sibling.red = true;
-                        node.red = true;
-                    }
-                    else {
-                        var dir2 = gp.right === p;
-
-                        if(vadimg.bintrees.RBTree.is_red(sibling.get_child(last))) {
-                            gp.set_child(dir2, vadimg.bintrees.RBTree.double_rotate(p, last));
-                        }
-                        else if(vadimg.bintrees.RBTree.is_red(sibling.get_child(!last))) {
-                            gp.set_child(dir2, vadimg.bintrees.RBTree.single_rotate(p, last));
-                        }
-
-                        // ensure correct coloring
-                        var gpc = gp.get_child(dir2);
-                        gpc.red = true;
-                        node.red = true;
-                        gpc.left.red = false;
-                        gpc.right.red = false;
-                    }
-                }
+            else if(vadimg.bintrees.RBTree.is_red(sibling.get_child(!last))) {
+              gp.set_child(dir2, vadimg.bintrees.RBTree.singleRotate_(p, last));
             }
+
+            // ensure correct coloring
+            var gpc = gp.get_child(dir2);
+            gpc.red = true;
+            node.red = true;
+            gpc.left.red = false;
+            gpc.right.red = false;
+          }
         }
+      }
     }
+  }
 
-    // replace and remove if found
-    if(!goog.isNull(found)){
-        found.data = node.data;
-        p.set_child(p.right === node, node.get_child(goog.isNull(node.left)));
-        this.size--;
-    }
+  // replace and remove if found
+  if(!goog.isNull(found)){
+    found.data = node.data;
+    p.set_child(p.right === node, node.get_child(goog.isNull(node.left)));
+    this.size--;
+  }
 
-    // update root and make it black
-    this.root_ = head.right;
-    if(!goog.isNull(this.root_)) {
-        this.root_.red = false;
-    }
+  // update root and make it black
+  this.root_ = head.right;
+  if(!goog.isNull(this.root_)) {
+    this.root_.red = false;
+  }
 
-    return !goog.isNull(found);
+  return !goog.isNull(found);
 };
 
 
@@ -200,7 +200,7 @@ vadimg.bintrees.RBTree.prototype.remove = function(data) {
  * @return {!boolean}
  */
 vadimg.bintrees.RBTree.is_red = function(node) {
-    return !goog.isNull(node) && node.red;
+  return !goog.isNull(node) && node.red;
 };
 
 
@@ -209,25 +209,26 @@ vadimg.bintrees.RBTree.is_red = function(node) {
  * @param {!boolean} dir
  * @return {!vadimg.bintrees.Node}
  */
-vadimg.bintrees.RBTree.single_rotate = function(root, dir) {
-    var save = root.get_child(!dir);
+vadimg.bintrees.RBTree.singleRotate_ = function(root, dir) {
+  var save = root.get_child(!dir);
 
-    root.set_child(!dir, save.get_child(dir));
-    save.set_child(dir, root);
+  root.set_child(!dir, save.get_child(dir));
+  save.set_child(dir, root);
 
-    root.red = true;
-    save.red = false;
+  root.red = true;
+  save.red = false;
 
-    return save;
+  return save;
 };
 
 
 /**
+ * @private
  * @param {?vadimg.bintrees.Node} root
  * @param {!boolean} dir
  * @return {!vadimg.bintrees.Node}
  */
-vadimg.bintrees.RBTree.double_rotate = function(root, dir) {
-    root.set_child(!dir, vadimg.bintrees.RBTree.single_rotate(root.get_child(!dir), !dir));
-    return vadimg.bintrees.RBTree.single_rotate(root, dir);
+vadimg.bintrees.RBTree.doubleRotate_ = function(root, dir) {
+  root.set_child(!dir, vadimg.bintrees.RBTree.singleRotate_(root.get_child(!dir), !dir));
+  return vadimg.bintrees.RBTree.singleRotate_(root, dir);
 };
