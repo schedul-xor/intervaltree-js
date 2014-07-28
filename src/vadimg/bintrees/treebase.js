@@ -33,35 +33,49 @@ vadimg.bintrees.TreeBase.prototype.find = function(data) {
   goog.asserts.assertNumber(data);
 
   var res = this.root_;
+  var minStartInRes = this.min(this.root_);
+  if(this.comparator_(data,minStartInRes) === -1){
+    return [];
+  }
   var iter = new vadimg.bintrees.Iterator();
 
   var didNotMatch = false;
+
+  // This while loop will find the *MOST LEFT* node available.
+  //
+  // Rules:
+  // 1. If cmax > data, go left.
   while(!goog.isNull(res)) {
-    var c = this.comparator_(data, res.start);
-   if(c === 0) {
+    var cmin = this.comparator_(data, res.start);
+    var maxInRes = res.getMaxEndIncludingChildren();
+    var cmax = this.comparator_(data,maxInRes);
+    var goLeft = cmax>data;
+
+    iter.getAncestors().push(res);
+    var foundRes = res.get_child(goLeft);
+    if(goog.isNull(foundRes)){
+      iter.getAncestors().pop();
+      foundRes = res;
       break;
-    } else {
-      iter.getAncestors().push(res);
-      var foundRes = res.get_child(c > 0);
-      if(goog.isNull(foundRes)){
-        iter.getAncestors().pop();
-        foundRes = res;
-        didNotMatch = true;
-        break;
-      }
-      res = foundRes;
     }
+    res = foundRes;
   }
   iter.setNodeForCursor(res);
-  iter.prev(this.root_); // Since
-  if(didNotMatch){
-    iter.prev(this.root_);
-  }
+  iter.prev(this.root_);
 
   var foundRanges = [];
   var node;
   while(!goog.isNull(node = iter.next(this.root_))){
-    console.log('node.start',node.start);
+    if(this.comparator_(data,node.start) === -1){
+      continue;
+    }
+    var rangesWhereEndIsOver = node.rangesWhereEndIsOver(data);
+    if(goog.isNull(rangesWhereEndIsOver)){
+      continue;
+    }
+    goog.array.forEach(rangesWhereEndIsOver,function(range,index){
+      foundRanges.push(range);
+    },this);
   }
 
   return foundRanges;

@@ -54,6 +54,7 @@ vadimg.bintrees.BinTree.prototype.insert = function(range) {
 
     // stop if found
     if(this.comparator_(node.start, range.start) === 0) {
+      node.addRange(range);
       return false;
     }
 

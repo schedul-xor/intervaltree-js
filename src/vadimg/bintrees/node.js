@@ -13,9 +13,9 @@ goog.require('goog.structs.PriorityQueue');
  * @param {number=} opt_start
  */
 vadimg.bintrees.Node = function(opt_start) {
-  this.start = opt_start?opt_start:null;
+  this.start = goog.isDefAndNotNull(opt_start)?opt_start:null;
   this.addedEnds_ = {};
-  this.endHeap = new goog.structs.PriorityQueue();
+  this.endMaxHeap_ = new goog.structs.PriorityQueue();
   this.maxEndIncludingChildren_ = this.start;
   this.left = null;
   this.right = null;
@@ -27,6 +27,7 @@ vadimg.bintrees.Node = function(opt_start) {
  * @param {!goog.math.Range} range
  */
 vadimg.bintrees.Node.prototype.addRange = function(range){
+  goog.asserts.assertInstanceof(range,goog.math.Range);
   goog.asserts.assert(range.start === this.start);
 
   var end = range.end;
@@ -35,9 +36,32 @@ vadimg.bintrees.Node.prototype.addRange = function(range){
   }
   this.addedEnds_[end] = 1;
 
-  // Since goog.structs.PriorityQueue dequeues values in ascendant order, you need to enqueue negative values in order to let this.endHeap dequeue in descendant order.
-  this.endHeap.enqueue(-end,end);
+  // Since goog.structs.PriorityQueue dequeues values in ascendant order, you need to enqueue negative values in order to let this.endMaxHeap dequeue in descendant order.
+  this.endMaxHeap_.enqueue(-end,end);
   this.updateMaxEndIncludingChildren();
+};
+
+
+/**
+ * @private
+ * @param {!goog.structs.PriorityQueue} heap
+ * @param {!number} removingValue
+ */
+vadimg.bintrees.Node.removeValueFromHeap_ = function(heap,removingValue){
+  goog.asserts.assertInstanceof(heap,goog.structs.PriorityQueue);
+  goog.asserts.assertNumber(removingValue);
+
+  var poppedButStillRequiredValues = [];
+  while(!heap.isEmpty()){
+    var popped = heap.dequeue();
+    if(removingValue === popped){
+      break;
+    }
+    poppedButStillRequiredValues.push(popped);
+  }
+  goog.array.forEach(poppedButStillRequiredValues,function(value,index){
+    heap.enqueue(-value,value);
+  });
 };
 
 
@@ -45,22 +69,14 @@ vadimg.bintrees.Node.prototype.addRange = function(range){
  * @param {!goog.math.Range} range
  */
 vadimg.bintrees.Node.prototype.removeRange = function(range){
+  goog.asserts.assertInstanceof(range,goog.math.Range);
+
   var end = range.end;
   if(!goog.object.containsKey(this.addedEnds_,end)){
     return;
   }
   goog.object.remove(this.addedEnds_,end);
-  var poppedButStillRequiredValues = [];
-  while(!this.endHeap.isEmpty()){
-    var popped = this.endHeap.dequeue();
-    if(end === popped){
-      break;
-    }
-    poppedButStillRequiredValues.push(popped);
-  }
-  goog.array.forEach(poppedButStillRequiredValues,function(value,index){
-    this.endHeap.enqueue(-value,value);
-  },this);
+  vadimg.bintrees.Node.removeValueFromHeap_(this.endMaxHeap_,end);
   this.updateMaxEndIncludingChildren();
 };
 
@@ -69,7 +85,7 @@ vadimg.bintrees.Node.prototype.removeRange = function(range){
  * @return {!boolean}
  */
 vadimg.bintrees.Node.prototype.isEmpty = function(){
-  return this.endHeap.isEmpty();
+  return this.endMaxHeap_.isEmpty();
 };
 
 
@@ -77,7 +93,7 @@ vadimg.bintrees.Node.prototype.isEmpty = function(){
  *
  */
 vadimg.bintrees.Node.prototype.updateMaxEndIncludingChildren = function(){
-  var currentMaxInsideMe = this.endHeap.peek();
+  var currentMaxInsideMe = this.endMaxHeap_.peek();
   var maxInLeft = goog.isNull(this.left)?this.start:this.left.getMaxEndIncludingChildren();
   var maxInRight = goog.isNull(this.right)?this.start:this.right.getMaxEndIncludingChildren();
   this.maxEndIncludingChildren_ = Math.max(Math.max(currentMaxInsideMe,maxInLeft),maxInRight);
@@ -93,14 +109,21 @@ vadimg.bintrees.Node.prototype.getMaxEndIncludingChildren = function(){
 
 
 /**
+ * @param {!number} end
  * @return {?Array.<!goog.math.Range>}
  */
-vadimg.bintrees.Node.prototype.allRanges = function(){
+vadimg.bintrees.Node.prototype.rangesWhereEndIsOver = function(end){
   if(goog.isDefAndNotNull(this.start)){
     var ranges = [];
-    goog.array.forEach(this.endHeap.getValues(),function(end,index){
-      goog.asserts.assertNumber(this.start);
-      ranges.push(new goog.math.Range(this.start,end));
+    while(!this.endMaxHeap_.isEmpty()){
+      var foundEnd = this.endMaxHeap_.dequeue();
+      if(foundEnd <= end){
+        break;
+      }
+      ranges.push(new goog.math.Range(this.start,foundEnd));
+    }
+    goog.array.forEach(ranges,function(range,index){
+      this.endMaxHeap_.enqueue(-range.end,range.end);
     },this);
     return ranges;
   }
@@ -127,4 +150,5 @@ vadimg.bintrees.Node.prototype.set_child = function(dir, val) {
   }else {
     this.left = val;
   }
+  this.updateMaxEndIncludingChildren();
 };
