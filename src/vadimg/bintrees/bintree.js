@@ -10,23 +10,25 @@ goog.require('vadimg.bintrees.TreeBase');
 /**
  * @constructor
  * @extends {vadimg.bintrees.TreeBase}
- * @param {function(!number,!number):!number=} opt_comparator
+ * @param {function(?number,?number):!number=} opt_comparator
  */
 vadimg.bintrees.BinTree = function(opt_comparator) {
-  goog.base(this,opt_comparator);
+  goog.base(this, opt_comparator);
 };
-goog.inherits(vadimg.bintrees.BinTree,vadimg.bintrees.TreeBase);
+goog.inherits(vadimg.bintrees.BinTree, vadimg.bintrees.TreeBase);
 
 
 /**
  * returns true if inserted, false if duplicate
+ * @param {!goog.math.Range} range
+ * @return {!boolean}
  */
 vadimg.bintrees.BinTree.prototype.insert = function(range) {
-  goog.asserts.assertInstanceof(range,goog.math.Range);
+  goog.asserts.assertInstanceof(range, goog.math.Range);
 
   var ret = false;
 
-  if(goog.isNull(this.root_)) {
+  if (goog.isNull(this.root_)) {
     // empty tree
     this.root_ = new vadimg.bintrees.Node(range.start);
     this.root_.addRange(range);
@@ -41,8 +43,8 @@ vadimg.bintrees.BinTree.prototype.insert = function(range) {
   var node = this.root_;
 
   // search down
-  while(true) {
-    if(goog.isNull(node)) {
+  while (true) {
+    if (goog.isNull(node)) {
       // insert new node at the bottom
       node = new vadimg.bintrees.Node(range.start);
       node.addRange(range);
@@ -53,7 +55,7 @@ vadimg.bintrees.BinTree.prototype.insert = function(range) {
     }
 
     // stop if found
-    if(this.comparator_(node.start, range.start) === 0) {
+    if (this.comparator_(node.start, range.start) === 0) {
       node.addRange(range);
       return false;
     }
@@ -69,9 +71,11 @@ vadimg.bintrees.BinTree.prototype.insert = function(range) {
 
 /**
  * returns true if removed, false if not found
+ * @param {!number} data
+ * @return {!boolean}
  */
 vadimg.bintrees.BinTree.prototype.remove = function(data) {
-  if(goog.isNull(this.root_)){
+  if (goog.isNull(this.root_)) {
     return false;
   }
 
@@ -82,18 +86,18 @@ vadimg.bintrees.BinTree.prototype.remove = function(data) {
   var found = null; // found item
   var dir = true;
 
-  while(!goog.isNull(node.get_child(dir))){
+  while (!goog.isNull(node.get_child(dir))) {
     p = node;
     node = node.get_child(dir);
     var cmp = this.comparator_(data, node.start);
     dir = cmp > 0;
 
-    if(cmp === 0) {
+    if (cmp === 0) {
       found = node;
     }
   }
 
-  if(!goog.isNull(found)){
+  if (!goog.isNull(found)) {
     found.start = node.start;
     p.set_child(p.right === node, node.get_child(goog.isNull(node.left)));
 

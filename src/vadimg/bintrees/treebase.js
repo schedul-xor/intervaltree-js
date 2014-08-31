@@ -7,11 +7,11 @@ goog.require('vadimg.bintrees.Iterator');
 
 /**
  * @constructor
- * @param {function(!number,!number):!number=} opt_comparator
+ * @param {function(?number,?number):!number=} opt_comparator
  */
 vadimg.bintrees.TreeBase = function(opt_comparator) {
   this.root_ = null;
-  this.comparator_ = opt_comparator?opt_comparator:vadimg.bintrees.TreeBase.DEFAULT_COMPARATOR_;
+  this.comparator_ = opt_comparator ? opt_comparator : vadimg.bintrees.TreeBase.DEFAULT_COMPARATOR_;
   this.size = 0;
 };
 
@@ -21,6 +21,7 @@ vadimg.bintrees.TreeBase = function(opt_comparator) {
  */
 vadimg.bintrees.TreeBase.prototype.clear = function() {
   this.root_ = null;
+  this.size = 0;
 };
 
 
@@ -34,7 +35,7 @@ vadimg.bintrees.TreeBase.prototype.find = function(data) {
 
   var res = this.root_;
   var minStartInRes = this.min();
-  if(this.comparator_(data,minStartInRes) === -1){
+  if (this.comparator_(data, minStartInRes) === -1) {
     return [];
   }
   var iter = new vadimg.bintrees.Iterator();
@@ -45,15 +46,15 @@ vadimg.bintrees.TreeBase.prototype.find = function(data) {
   //
   // Rules:
   // 1. If cmax > data, go left.
-  while(!goog.isNull(res)) {
+  while (!goog.isNull(res)) {
     var cmin = this.comparator_(data, res.start);
     var maxInRes = res.getMaxEndIncludingChildren();
-    var cmax = this.comparator_(data,maxInRes);
-    var goLeft = cmax>data;
+    var cmax = this.comparator_(data, maxInRes);
+    var goLeft = cmax > data;
 
     iter.getAncestors().push(res);
     var foundRes = res.get_child(goLeft);
-    if(goog.isNull(foundRes)){
+    if (goog.isNull(foundRes)) {
       iter.getAncestors().pop();
       foundRes = res;
       break;
@@ -65,15 +66,15 @@ vadimg.bintrees.TreeBase.prototype.find = function(data) {
 
   var foundRanges = [];
   var node;
-  while(!goog.isNull(node = iter.next(this.root_))){
-    if(this.comparator_(data,node.start) === -1){
+  while (!goog.isNull(node = iter.next(this.root_))) {
+    if (this.comparator_(data, node.start) === -1) {
       continue;
     }
     var rangesWhereEndIsOver = node.rangesWhereEndIsOver(data);
-    if(goog.isNull(rangesWhereEndIsOver)){
+    if (goog.isNull(rangesWhereEndIsOver)) {
       continue;
     }
-    goog.array.forEach(rangesWhereEndIsOver,function(range,index){
+    goog.array.forEach(rangesWhereEndIsOver, function(range, index) {
       foundRanges.push(range);
     },this);
   }
@@ -92,9 +93,9 @@ vadimg.bintrees.TreeBase.prototype.lowerBound = function(item) {
   var iter = new vadimg.bintrees.Iterator();
   var cmp = this.comparator_;
 
-  while(!goog.isNull(cur)) {
+  while (!goog.isNull(cur)) {
     var c = cmp(item, cur.start);
-    if(c === 0) {
+    if (c === 0) {
       iter.setNodeForCursor(cur);
       return iter;
     }
@@ -102,9 +103,9 @@ vadimg.bintrees.TreeBase.prototype.lowerBound = function(item) {
     cur = cur.get_child(c > 0);
   }
 
-  for(var i=iter.getAncestors().length - 1; i >= 0; --i) {
+  for (var i = iter.getAncestors().length - 1; i >= 0; --i) {
     cur = iter.getAncestors()[i];
-    if(cmp(item, cur.start) < 0) {
+    if (cmp(item, cur.start) < 0) {
       iter.setNodeForCursor(cur);
       iter.getAncestors().length = i;
       return iter;
@@ -125,7 +126,7 @@ vadimg.bintrees.TreeBase.prototype.upperBound = function(item) {
   var iter = this.lowerBound(item);
   var cmp = this.comparator_;
 
-  while(cmp(iter.data(), item) === 0) {
+  while (cmp(iter.data(), item) === 0) {
     iter.next(this.root_);
   }
 
@@ -139,10 +140,10 @@ vadimg.bintrees.TreeBase.prototype.upperBound = function(item) {
  */
 vadimg.bintrees.TreeBase.prototype.min = function() {
   var res = this.root_;
-  if(goog.isNull(res)) {
+  if (goog.isNull(res)) {
     return null;
   }
-  while(!goog.isNull(res.left)) {
+  while (!goog.isNull(res.left)) {
     res = res.left;
   }
   return res.start;
@@ -155,10 +156,10 @@ vadimg.bintrees.TreeBase.prototype.min = function() {
  */
 vadimg.bintrees.TreeBase.prototype.max = function() {
   var res = this.root_;
-  if(goog.isNull(res)) {
+  if (goog.isNull(res)) {
     return null;
   }
-  while(!goog.isNull(res.right)) {
+  while (!goog.isNull(res.right)) {
     res = res.right;
   }
   return res.start;
@@ -171,11 +172,11 @@ vadimg.bintrees.TreeBase.prototype.max = function() {
  * @param {!function(?vadimg.bintrees.Node)} f
  * @param {S=} opt_obj The object to be used as the value of 'this' within f.
  */
-vadimg.bintrees.TreeBase.prototype.forEach = function(f,opt_obj) {
+vadimg.bintrees.TreeBase.prototype.forEach = function(f, opt_obj) {
   goog.asserts.assertFunction(f);
 
-  var it=new vadimg.bintrees.Iterator(), node;
-  while(!goog.isNull(node = it.next(this.root_))) {
+  var it = new vadimg.bintrees.Iterator(), node;
+  while (!goog.isNull(node = it.next(this.root_))) {
     f.call(opt_obj, node);
   }
 };
@@ -187,28 +188,35 @@ vadimg.bintrees.TreeBase.prototype.forEach = function(f,opt_obj) {
  * @param {!function(?vadimg.bintrees.Node)} f
  * @param {S=} opt_obj The object to be used as the value of 'this' within f.
  */
-vadimg.bintrees.TreeBase.prototype.forReversedEach = function(f,opt_obj) {
+vadimg.bintrees.TreeBase.prototype.forReversedEach = function(f, opt_obj) {
   goog.asserts.assertFunction(f);
 
-  var it=new vadimg.bintrees.Iterator(), node;
-  while(!goog.isNull(node = it.prev(this.root_))) {
+  var it = new vadimg.bintrees.Iterator(), node;
+  while (!goog.isNull(node = it.prev(this.root_))) {
     f.call(opt_obj, node);
   }
 };
 
 
 /**
- * @param {!number} a
- * @param {!number} b
+ * @private
+ * @param {?number} a
+ * @param {?number} b
+ * @return {!number}
  */
 vadimg.bintrees.TreeBase.DEFAULT_COMPARATOR_ = function(a, b) {
-  goog.asserts.assertNumber(a);
-  goog.asserts.assertNumber(b);
+  if (a === b) {
+    return 0;
+  }
+  if (goog.isNull(a)) {
+    return 1;
+  }
+  if (goog.isNull(b)) {
+    return -1;
+  }
 
   if (a < b) {
     return -1;
-  } else if (a >b) {
-    return 1;
   }
-  return 0;
+  return 1;
 };

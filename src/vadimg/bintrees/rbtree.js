@@ -10,12 +10,12 @@ goog.require('vadimg.bintrees.TreeBase');
 /**
  * @constructor
  * @extends {vadimg.bintrees.TreeBase}
- * @param {function(!number,!number):!number=} opt_comparator
+ * @param {function(?number,?number):!number=} opt_comparator
  */
-vadimg.bintrees.RBTree = function(opt_comparator){
-  goog.base(this,opt_comparator);
+vadimg.bintrees.RBTree = function(opt_comparator) {
+  goog.base(this, opt_comparator);
 };
-goog.inherits(vadimg.bintrees.RBTree,vadimg.bintrees.TreeBase);
+goog.inherits(vadimg.bintrees.RBTree, vadimg.bintrees.TreeBase);
 
 
 /**
@@ -24,11 +24,11 @@ goog.inherits(vadimg.bintrees.RBTree,vadimg.bintrees.TreeBase);
  * @return {!boolean}
  */
 vadimg.bintrees.RBTree.prototype.insert = function(range) {
-  goog.asserts.assertInstanceof(range,goog.math.Range);
+  goog.asserts.assertInstanceof(range, goog.math.Range);
 
   var ret = false;
 
-  if(goog.isNull(this.root_)) {
+  if (goog.isNull(this.root_)) {
     // empty tree
     this.root_ = new vadimg.bintrees.Node(range.start);
     this.root_.addRange(range);
@@ -48,14 +48,14 @@ vadimg.bintrees.RBTree.prototype.insert = function(range) {
     ggp.right = this.root_;
 
     // search down
-    while(true) {
-      if(goog.isNull(node)) {
+    while (true) {
+      if (goog.isNull(node)) {
         // insert new node at the bottom
         node = new vadimg.bintrees.Node(range.start);
         p.set_child(dir, node);
         ret = true;
         this.size++;
-      }else if(vadimg.bintrees.RBTree.is_red(node.left) && vadimg.bintrees.RBTree.is_red(node.right)) {
+      }else if (vadimg.bintrees.RBTree.is_red(node.left) && vadimg.bintrees.RBTree.is_red(node.right)) {
         // color flip
         node.red = true;
         node.left.red = false;
@@ -63,10 +63,10 @@ vadimg.bintrees.RBTree.prototype.insert = function(range) {
       }
 
       // fix red violation
-      if(vadimg.bintrees.RBTree.is_red(node) && vadimg.bintrees.RBTree.is_red(p)) {
+      if (vadimg.bintrees.RBTree.is_red(node) && vadimg.bintrees.RBTree.is_red(p)) {
         var dir2 = ggp.right === gp;
 
-        if(node === p.get_child(last)) {
+        if (node === p.get_child(last)) {
           ggp.set_child(dir2, vadimg.bintrees.RBTree.singleRotate_(gp, !last));
         }
         else {
@@ -77,7 +77,7 @@ vadimg.bintrees.RBTree.prototype.insert = function(range) {
       var cmp = this.comparator_(node.start, range.start);
 
       // stop if found
-      if(cmp === 0) {
+      if (cmp === 0) {
         break;
       }
 
@@ -85,7 +85,7 @@ vadimg.bintrees.RBTree.prototype.insert = function(range) {
       dir = cmp < 0;
 
       // update helpers
-      if(!goog.isNull(gp)) {
+      if (!goog.isNull(gp)) {
         ggp = gp;
       }
       gp = p;
@@ -111,7 +111,7 @@ vadimg.bintrees.RBTree.prototype.insert = function(range) {
  * @return {!boolean}
  */
 vadimg.bintrees.RBTree.prototype.remove = function(data) {
-  if(goog.isNull(this.root_)) {
+  if (goog.isNull(this.root_)) {
     return false;
   }
 
@@ -123,7 +123,7 @@ vadimg.bintrees.RBTree.prototype.remove = function(data) {
   var found = null; // found item
   var dir = true;
 
-  while(!goog.isNull(node.get_child(dir))) {
+  while (!goog.isNull(node.get_child(dir))) {
     var last = dir;
 
     // update helpers
@@ -136,21 +136,21 @@ vadimg.bintrees.RBTree.prototype.remove = function(data) {
     dir = cmp > 0;
 
     // save found node
-    if(cmp === 0) {
+    if (cmp === 0) {
       found = node;
     }
 
     // push the red node down
-    if(!vadimg.bintrees.RBTree.is_red(node) && !vadimg.bintrees.RBTree.is_red(node.get_child(dir))) {
-      if(vadimg.bintrees.RBTree.is_red(node.get_child(!dir))) {
+    if (!vadimg.bintrees.RBTree.is_red(node) && !vadimg.bintrees.RBTree.is_red(node.get_child(dir))) {
+      if (vadimg.bintrees.RBTree.is_red(node.get_child(!dir))) {
         var sr = vadimg.bintrees.RBTree.singleRotate_(node, dir);
         p.set_child(last, sr);
         p = sr;
       }
-      else if(!vadimg.bintrees.RBTree.is_red(node.get_child(!dir))) {
+      else if (!vadimg.bintrees.RBTree.is_red(node.get_child(!dir))) {
         var sibling = p.get_child(!last);
-        if(!goog.isNull(sibling)){
-          if(!vadimg.bintrees.RBTree.is_red(sibling.get_child(!last)) && !vadimg.bintrees.RBTree.is_red(sibling.get_child(last))) {
+        if (!goog.isNull(sibling)) {
+          if (!vadimg.bintrees.RBTree.is_red(sibling.get_child(!last)) && !vadimg.bintrees.RBTree.is_red(sibling.get_child(last))) {
             // color flip
             p.red = false;
             sibling.red = true;
@@ -159,10 +159,10 @@ vadimg.bintrees.RBTree.prototype.remove = function(data) {
           else {
             var dir2 = gp.right === p;
 
-            if(vadimg.bintrees.RBTree.is_red(sibling.get_child(last))) {
+            if (vadimg.bintrees.RBTree.is_red(sibling.get_child(last))) {
               gp.set_child(dir2, vadimg.bintrees.RBTree.doubleRotate_(p, last));
             }
-            else if(vadimg.bintrees.RBTree.is_red(sibling.get_child(!last))) {
+            else if (vadimg.bintrees.RBTree.is_red(sibling.get_child(!last))) {
               gp.set_child(dir2, vadimg.bintrees.RBTree.singleRotate_(p, last));
             }
 
@@ -179,7 +179,7 @@ vadimg.bintrees.RBTree.prototype.remove = function(data) {
   }
 
   // replace and remove if found
-  if(!goog.isNull(found)){
+  if (!goog.isNull(found)) {
     found.start = node.start;
     p.set_child(p.right === node, node.get_child(goog.isNull(node.left)));
     this.size--;
@@ -187,7 +187,7 @@ vadimg.bintrees.RBTree.prototype.remove = function(data) {
 
   // update root and make it black
   this.root_ = head.right;
-  if(!goog.isNull(this.root_)) {
+  if (!goog.isNull(this.root_)) {
     this.root_.red = false;
   }
 
@@ -205,6 +205,7 @@ vadimg.bintrees.RBTree.is_red = function(node) {
 
 
 /**
+ * @private
  * @param {?vadimg.bintrees.Node} root
  * @param {!boolean} dir
  * @return {!vadimg.bintrees.Node}
